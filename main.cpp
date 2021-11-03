@@ -1,6 +1,8 @@
-#include <iostream>
+#include <fstream>
+#include "girvan_newman.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    std::ifstream input("/Users/kynerd/Desktop/Algorithms/21f-pa03-kynerd-hulcy/input.grapml");
+    algos::parse(input);
+    //algos::hi();
 }

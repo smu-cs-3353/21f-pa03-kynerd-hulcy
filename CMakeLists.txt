@@ -8,6 +8,6 @@ find_package(Boost 1.76.0 COMPONENTS graph)
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
-    add_executable(21f_pa03_kynerd_hulcy main.cpp)
+    add_executable(21f_pa03_kynerd_hulcy main.cpp girvan_newman.h)
     target_link_libraries(21f_pa03_kynerd_hulcy ${Boost_LIBRARIES})
 endif()

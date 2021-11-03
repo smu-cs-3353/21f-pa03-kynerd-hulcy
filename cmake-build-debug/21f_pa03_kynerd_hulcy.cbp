@@ -86,6 +86,9 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/Users/kynerd/Desktop/Algorithms/21f-pa03-kynerd-hulcy/girvan_newman.h">
+			<Option target="21f_pa03_kynerd_hulcy"/>
+		</Unit>
 		<Unit filename="/Users/kynerd/Desktop/Algorithms/21f-pa03-kynerd-hulcy/main.cpp">
 			<Option target="21f_pa03_kynerd_hulcy"/>
 		</Unit>
