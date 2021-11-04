@@ -23,8 +23,7 @@ community2 = list(range(11, 21))
 community3 = list(range(21, 31))
 community4 = list(range(31, 41))
 
-
-edges = {new_list: [] for new_list in range(1, 41)} # change this
+edges = {new_list: [] for new_list in range(1, 41)}  # change this
 #
 # for vertex in community1:
 
@@ -52,7 +51,6 @@ for vertex1 in community1:
         elif add(p_in):
             num_edges += 1
             g.add_edge(vertex1, vertex2)
-
 
 for vertex1 in community2:
     for vertex2 in community2:
@@ -132,11 +130,13 @@ for vertex1 in community4:
             num_edges += 1
             g.add_edge(vertex1, vertex2)
 
+e_b_values = nx.betweenness_centrality(g)
 
 nx.write_graphml(g, "input.grapml")
 nx.draw(g)
 plt.savefig("testOutput.png")
 
-print("p_in = " + str(p_in) + ", p_out = " + str(p_out))
-print("num_edges = " + str(num_edges))
-print("num_edges / num_vertices = " + str(num_edges / 128))
+# print("p_in = " + str(p_in) + ", p_out = " + str(p_out))
+# print("num_edges = " + str(num_edges))
+# print("num_edges / num_vertices = " + str(num_edges / 128))
+print(e_b_values)
