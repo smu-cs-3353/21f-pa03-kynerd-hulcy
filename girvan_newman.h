@@ -22,9 +22,7 @@ namespace algos {
         boost::write_graphviz(test, g);
     }
 
-    void hi() {
-        std::cout << "HI there buddy :)" << std::endl;
-    }
+
 }
 
 
