@@ -34,66 +34,82 @@ namespace algos {
         double dependency;
     };
 
+    void resetDependencies(graph &g, std::map<boost::adjacency_list<>::vertex_iterator, vertex>& vertices) {
+        std::pair<v_iterator, v_iterator> vs = boost::vertices(g);
+        v_iterator start = vs.first;
+        v_iterator end = vs.second;
+
+        while(start != end) {
+            vertices.at(start).dependency = 0;
+            start++;
+        }
+    }
+
 
     std::map<v_iterator, double> edge_betweenness(graph &g) {
         std::map<v_iterator, double> edge_betweenness_values;
-        std::queue<v_iterator> v_queue;
-        std::stack<v_iterator> v_stack;
+        std::queue<v_iterator> v_queue; //Q
+        std::stack<v_iterator> v_stack; //S
         std::pair<v_iterator, v_iterator> vs = boost::vertices(g);
-        std::map<boost::adjacency_list<>::vertex_iterator, vertex> vertices;
+        std::map<boost::adjacency_list<>::vertex_iterator, vertex> vertices; //V
         v_iterator start = vs.first;
         v_iterator end = vs.second;
 
         while (start != end) {
-        //std::cout << *start << std::endl;
-            edge_betweenness_values.emplace(start, 0);
-            vertices.emplace(start, vertex());
+            //std::cout << *start << std::endl;
+            edge_betweenness_values.emplace(start, 0); //initialize to 0
+            vertices.emplace(start, vertex()); //put v in V and initialize dependency to 0
+            start++;
+        }
+        start = vs.first;
+        while (start != end) { //for s in V
+            //initialization
+            vertices.at(start).num_shortest_paths = 1; //num_shortest_paths[s] <- 1
+            vertices.at(start).distance = 0; //dist[s] <- 0
+
+            v_queue.emplace(start); //enqueue s -> Q
+
+            while (!v_queue.empty()) { //while Q not empty
+                v_iterator v = v_queue.front(); //v
+                v_queue.pop(); //dequeue v <- Q
+                v_stack.emplace(v); //push v -> S
+                v_iterator w = vs.first; //w
+                while (w != end) {//for each
+                    if (boost::edge(*v, *w, g).second) { //such that (v,w) are in E
+                        //path discovery
+                        if (vertices.at(w).distance == -1) {//if dist[w] = infinity
+                            vertices.at(w).distance = vertices.at(v).distance + 1; //dist[w] <- dist[v] + 1
+                            v_queue.emplace(w); //enqueue w -> Q
+                        }
+                            //path counting
+                        else if (vertices.at(w).distance == vertices.at(v).distance + 1) { //if dist[w] = dist[v] + 1
+                            vertices.at(w).num_shortest_paths = vertices.at(w).num_shortest_paths + vertices.at(
+                                    v).num_shortest_paths; //num_shortest_paths[w] = /num_shortest_paths[w] + /num_shortest_paths[v]
+                            vertices.at(w).pred.push_back(v); //append v -> Pred[w]
+                        }
+                    }
+                    w++;
+                }//end foreach
+            }//end while Q not empty
+
+            //accumulation
+            resetDependencies(g, vertices); //for v in V do dependency[v] <- 0
+            while (!v_stack.empty()) { //while S not empty
+                v_iterator w = v_stack.top(); //pop w <- S
+                v_stack.pop(); //pop w <- S
+                std::list<v_iterator> curr_pred = vertices.at(w).pred;
+                for (auto &v : curr_pred) {//for v in Pred[w]
+                    vertices.at(v).dependency = vertices.at(v).dependency +
+                            ((double)vertices.at(v).num_shortest_paths / vertices.at(w).num_shortest_paths)
+                            * (1 + vertices.at(w).dependency);
+                }
+                if (w != start) {
+                    edge_betweenness_values.at(w) = edge_betweenness_values.at(w) + vertices.at(w).dependency;
+                }
+            }//end while S not empty
             start++;
         }
 
-        start = vs.first;
-        vertices.at(start).num_shortest_paths = 1;
-        vertices.at(start).distance = 0;
-
-        v_queue.emplace(start);
-
-        while (!v_queue.empty()) {
-            v_iterator vertex1 = v_queue.front();
-            v_queue.pop();
-            v_stack.emplace(vertex1);
-            v_iterator vertex2 = vs.first;
-            while (vertex2 != end) {
-                if (boost::edge(*vertex1, *vertex2, g).second) {
-                    if (vertices.at(vertex2).distance == -1) {
-
-                        int test = vertices.at(vertex1).distance + 1;
-                        vertices.at(vertex2).distance = test;
-                        std::cout << test << std::endl;
-                        v_queue.emplace(vertex2);
-                    } else if (vertices.at(vertex2).distance == vertices.at(vertex1).distance + 1) {
-                        vertices.at(vertex2).num_shortest_paths = vertices.at(vertex2).num_shortest_paths + vertices.at(vertex1).num_shortest_paths;
-                        vertices.at(vertex2).pred.push_back(vertex1);
-                    }
-                }
-                vertex2++;
-            }
-
-            start = vs.first;
-
-            while (!v_stack.empty()) {
-                v_iterator vertex3 = v_stack.top();
-                v_stack.pop();
-                std::list<v_iterator> curr_pred = vertices.at(vertex3).pred;
-                for (auto &vertex4 : curr_pred) {
-                    vertices.at(vertex4).dependency = vertices.at(vertex4).dependency +
-                            ((double)vertices.at(vertex4).num_shortest_paths / vertices.at(vertex3).num_shortest_paths)
-                            * (1 + vertices.at(vertex3).dependency);
-                }
-                if (vertex3 != start) {
-                    edge_betweenness_values.at(vertex3) = edge_betweenness_values.at(vertex3) + vertices.at(vertex3).dependency;
-                }
-            }
-        }
         return edge_betweenness_values;
     }
 
