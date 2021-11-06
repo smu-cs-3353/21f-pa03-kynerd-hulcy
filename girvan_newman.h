@@ -23,7 +23,7 @@ namespace algos {
 
     struct vertex {
         vertex() {
-            distance = -1;
+            distance = 2147483647;
             pred = std::list<v_iterator>();
             num_shortest_paths = 0;
             dependency = 0;
@@ -41,6 +41,19 @@ namespace algos {
 
         while(start != end) {
             vertices.at(start).dependency = 0;
+            start++;
+        }
+    }
+
+    void resetAttributes(graph &g, std::map<boost::adjacency_list<>::vertex_iterator, vertex>& vertices) {
+        std::pair<v_iterator, v_iterator> vs = boost::vertices(g);
+        v_iterator start = vs.first;
+        v_iterator end = vs.second;
+
+        while(start != end) {
+            vertices.at(start).pred = std::list<v_iterator>();
+            vertices.at(start).distance = 2147483647;
+            vertices.at(start).num_shortest_paths = 0;
             start++;
         }
     }
@@ -64,6 +77,7 @@ namespace algos {
         start = vs.first;
         while (start != end) { //for s in V
             //initialization
+            resetAttributes(g, vertices);
             vertices.at(start).num_shortest_paths = 1; //num_shortest_paths[s] <- 1
             vertices.at(start).distance = 0; //dist[s] <- 0
 
@@ -77,7 +91,7 @@ namespace algos {
                 while (w != end) {//for each
                     if (boost::edge(*v, *w, g).second) { //such that (v,w) are in E
                         //path discovery
-                        if (vertices.at(w).distance == -1) {//if dist[w] = infinity
+                        if (vertices.at(w).distance == 2147483647) {//if dist[w] = infinity
                             vertices.at(w).distance = vertices.at(v).distance + 1; //dist[w] <- dist[v] + 1
                             v_queue.emplace(w); //enqueue w -> Q
                         }
@@ -99,16 +113,17 @@ namespace algos {
                 v_stack.pop(); //pop w <- S
                 std::list<v_iterator> curr_pred = vertices.at(w).pred;
                 for (auto &v : curr_pred) {//for v in Pred[w]
-                    vertices.at(v).dependency = vertices.at(v).dependency +
-                            ((double)vertices.at(v).num_shortest_paths / vertices.at(w).num_shortest_paths)
+                    double test = vertices.at(v).dependency +
+                            ((double)vertices.at(v).num_shortest_paths / (double)vertices.at(w).num_shortest_paths)
                             * (1 + vertices.at(w).dependency);
+                    vertices.at(v).dependency = test;
                 }
-                if (w != start) {
-                    edge_betweenness_values.at(w) = edge_betweenness_values.at(w) + vertices.at(w).dependency;
+                if (*w != *start) {//if w != s
+                    edge_betweenness_values.at(w) = edge_betweenness_values.at(w) + vertices.at(w).dependency; //cB[w] <- cB[w] + dependency[w]
                 }
             }//end while S not empty
             start++;
-        }
+        }//end for s in V
 
         return edge_betweenness_values;
     }
