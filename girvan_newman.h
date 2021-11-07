@@ -21,7 +21,7 @@
 
 namespace algos {
 
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> adjacency_list;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
     typedef boost::adjacency_list<>::vertex_iterator v_iterator;
 
     struct vertex {
@@ -54,7 +54,7 @@ namespace algos {
 
 
     float bfs_SSSP(v_iterator src, int n, std::stack<v_iterator> &visitStack,
-                   std::map<boost::adjacency_list<>::vertex_iterator, vertex> &vertices, adjacency_list &g) {
+                   std::map<boost::adjacency_list<>::vertex_iterator, vertex> &vertices, graph &g) {
         // Closeness counter.
         float closeness = 0;
 
@@ -89,12 +89,12 @@ namespace algos {
     }
 
 
-    std::map<boost::graph_traits<adjacency_list>::edge_descriptor, float> edge_betweenness(adjacency_list &g) {
-        std::map<boost::graph_traits<adjacency_list>::edge_descriptor, float> edgeBetweenness; //holds edge iterator and edge betweenness
+    std::map<boost::graph_traits<graph>::edge_descriptor, float> edge_betweenness(graph &g) {
+        std::map<boost::graph_traits<graph>::edge_descriptor, float> edgeBetweenness; //holds edge iterator and edge betweenness
 
-        std::pair<boost::graph_traits<adjacency_list>::edge_iterator, boost::graph_traits<adjacency_list>::edge_iterator> es = boost::edges(g);
-        boost::graph_traits<adjacency_list>::edge_iterator e_start = es.first;
-        boost::graph_traits<adjacency_list>::edge_iterator e_end = es.second;
+        std::pair<boost::graph_traits<graph>::edge_iterator, boost::graph_traits<graph>::edge_iterator> es = boost::edges(g);
+        boost::graph_traits<graph>::edge_iterator e_start = es.first;
+        boost::graph_traits<graph>::edge_iterator e_end = es.second;
         while(e_start != e_end) {
             edgeBetweenness.emplace(*e_start, 0);
             e_start++;
@@ -117,7 +117,7 @@ namespace algos {
         for (v_iterator src = start; src != end; src++) { //for each node in the graph
             resetVariables(src, vertices, start, end);
 
-            std::vector<boost::graph_traits<adjacency_list>::vertex_descriptor> predVector;
+            std::vector<boost::graph_traits<graph>::vertex_descriptor> predVector;
             //boost::graph::breadth_first_search(g, *src,
 //                                        boost::visitor(
 //                                                boost::make_bfs_visitor(
@@ -147,8 +147,8 @@ namespace algos {
         return edgeBetweenness;
     }
 
-    void girvan_newman(adjacency_list &g) {
-        std::map<boost::graph_traits<adjacency_list>::edge_descriptor, float> e_b_values1 = edge_betweenness(g);
+    void girvan_newman(graph &g) {
+        std::map<boost::graph_traits<graph>::edge_descriptor, float> e_b_values1 = edge_betweenness(g);
 
 //        for (auto &pair: e_b_values1) {
 //            std::cout << pair.first << ": " << pair.second << std::endl;
@@ -156,8 +156,8 @@ namespace algos {
     }
 
 
-    adjacency_list parse(std::ifstream &graphml_file) {
-        adjacency_list g;
+    boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS> parse(std::ifstream &graphml_file) {
+        boost::adjacency_list<boost::setS, boost::vecS, boost::undirectedS> g;
         boost::dynamic_properties dp;
         boost::read_graphml(graphml_file, g, dp);
         std::ofstream test("output.dot");

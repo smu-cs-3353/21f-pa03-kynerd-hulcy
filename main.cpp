@@ -8,38 +8,59 @@
 #include <algorithm>
 #include <iostream>
 #include "girvan_newman.h"
+#include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <fstream>
 
 int main() {
-//    std::ifstream input("../input.grapml");
+    std::ifstream input("../input.grapml");
 //    algos::parse(input);
     //algos::hi();
 
     enum { topLeft, topRight, bottomRight, bottomLeft };
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
-    typedef boost::adjacency_list<>::vertex_iterator v_iterator;
-    std::ifstream input("../input.grapml");
+
+    std::array<std::pair<int, int>, 4> edges{{
+                                                     std::make_pair(topLeft, topRight),
+                                                     std::make_pair(topRight, bottomRight),
+                                                     std::make_pair(bottomRight, bottomLeft),
+                                                     std::make_pair(bottomLeft, topLeft)
+                                             }};
+
+    typedef boost::adjacency_list<boost::setS, boost::vecS,
+            boost::undirectedS> graph;
+
+
     graph g = algos::parse(input);
-    std::pair<v_iterator, v_iterator> vs = boost::vertices(g);
-    v_iterator start = vs.first;
-    start = start + 3;
-    boost::adjacency_list<>::vertex_descriptor d = *start;
+
+    std::pair<boost::adjacency_list<>::vertex_iterator, boost::adjacency_list<>::vertex_iterator> vs = boost::vertices(g);
+    boost::adjacency_list<>::vertex_iterator start = vs.first;
+    boost::adjacency_list<>::vertex_iterator end = vs.second;
+    boost::adjacency_list<>::vertex_iterator test = start + 3;
 
 
+    boost::array<boost::adjacency_list<>::vertex_descriptor, 40> predecessors;
+    boost::array<int, 40> distances{{0}};
+    predecessors[*test] = *test;
 
-    boost::array<boost::adjacency_list<>::vertex_descriptor, 39> predecessors;
-
-    boost::breadth_first_search(g, d,
+    boost::breadth_first_search(g, *test,
                                 boost::visitor(
                                         boost::make_bfs_visitor(
-                                                boost::record_predecessors(predecessors.begin(),
-                                                                           boost::on_tree_edge{}))));
+                                                std::make_pair(
+                                                        boost::record_distances(distances.begin(),
+                                                                                boost::on_tree_edge()),
+                                                        boost::record_predecessors(predecessors.begin(),
+                                                                                   boost::on_tree_edge{})))));
 
-    int p = topLeft;
-    while (p != bottomRight)
+
+    std::for_each(distances.begin(), distances.end(),
+                  [](int d){ std::cout << d << '\n'; });
+
+    boost::adjacency_list<>::vertex_descriptor p = *start;
+    while (p != *test)
     {
         std::cout << p << '\n';
         p = predecessors[p];
     }
     std::cout << p << '\n';
+
+
 }
