@@ -3,6 +3,10 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/graphml.hpp>
+#include <boost/graph/breadth_first_search.hpp>
+#include <boost/array.hpp>
+#include <boost/graph/named_function_params.hpp>
+#include <boost/graph/visitors.hpp>
 #include <type_traits>
 #include <iostream>
 #include <fstream>
@@ -112,34 +116,15 @@ namespace algos {
         start = vs.first;
         for (v_iterator src = start; src != end; src++) { //for each node in the graph
             resetVariables(src, vertices, start, end);
-            //start breadth first search
-            vertices.at(src).distance = 0;
 
-            std::queue<v_iterator> visitQueue;
-            visitQueue.push(src);
+            std::vector<boost::graph_traits<adjacency_list>::vertex_descriptor> predVector;
+            //boost::graph::breadth_first_search(g, *src,
+//                                        boost::visitor(
+//                                                boost::make_bfs_visitor(
+//                                                        boost::record_predecessors(predVector.begin(),
+//                                                                                   boost::on_tree_edge{}))));
 
-            // While there are still elements in the queue.
-            while (!visitQueue.empty()) {
-                // Pop the first.
-                v_iterator v = visitQueue.front();
-                visitQueue.pop();
-                visitStack.emplace(v);
 
-                // Check the neighbors w of v.
-                for (v_iterator w = start; w != end; w++) {
-                    if (boost::edge(*v, *w, g).second) {
-                        std::cout << boost::edge(*v, *w, g).first << std::endl;
-                        if(vertices.at(w).distance < 0) {
-                            visitQueue.push(w);
-                            vertices.at(w).distance = vertices.at(w).distance + 1;
-                        }
-                        if(vertices.at(w).distance == vertices.at(v).distance + 1) {
-                            vertices.at(w).pred.push_back(v);
-                            vertices.at(w).num_shortest_paths = vertices.at(w).num_shortest_paths + vertices.at(v).num_shortest_paths;
-                        }
-                    }
-                }
-            }
             // Get the inverse order of visited nodes.
             while (!visitStack.empty()) {
                 v_iterator w = visitStack.top();
@@ -171,14 +156,14 @@ namespace algos {
     }
 
 
-    void parse(std::ifstream &graphml_file) {
+    adjacency_list parse(std::ifstream &graphml_file) {
         adjacency_list g;
         boost::dynamic_properties dp;
         boost::read_graphml(graphml_file, g, dp);
         std::ofstream test("output.dot");
         boost::write_graphviz(test, g);
-
-        girvan_newman(g);
+        return g;
+        //girvan_newman(g);
     }
 
 }
