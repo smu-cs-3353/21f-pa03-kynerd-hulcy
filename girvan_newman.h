@@ -17,8 +17,8 @@
 
 namespace algos {
 
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> adjacency_list;
-    typedef boost::adjacency_list<>::vertex_iterator v_iterator;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
 
     struct vertex {
         vertex() {
@@ -49,121 +49,102 @@ namespace algos {
     };
 
 
-    float bfs_SSSP(v_iterator src, int n, std::stack<v_iterator> &visitStack,
-                   std::map<boost::adjacency_list<>::vertex_iterator, vertex> &vertices, adjacency_list &g) {
-        // Closeness counter.
-        float closeness = 0;
-
-        // Queue used for the Bfs algorithm.
-        std::queue<v_iterator> visitQueue;
-        visitQueue.push(src);
-
-        // While there are still elements in the queue.
-        while (!visitQueue.empty()) {
-            // Pop the first.
-            v_iterator v = visitQueue.front();
-            visitQueue.pop();
-            visitStack.emplace(v);
-
-            // Closeness part aggregation.
-            closeness += vertices.at(v).distance;
-        }
-    }
-
-
-    // Clears the variables or re-initializes to 0, so that they are ready for the next loop.
-    void resetVariables(v_iterator src, std::map<boost::adjacency_list<>::vertex_iterator, vertex>& vertices, v_iterator start, v_iterator end) {
-        vertices.at(src).num_shortest_paths = 0;
-        vertices.at(src).dependency = 0;
-        vertices.at(src).pred.clear();
-
-        //all other dist except src are -1
-        while(start != end) {
-            vertices.at(start).distance = -1;
-            start++;
-        }
-    }
-
-
-    std::map<boost::graph_traits<adjacency_list>::edge_descriptor, float> edge_betweenness(adjacency_list &g) {
-        std::map<boost::graph_traits<adjacency_list>::edge_descriptor, float> edgeBetweenness; //holds edge iterator and edge betweenness
-
-        std::pair<boost::graph_traits<adjacency_list>::edge_iterator, boost::graph_traits<adjacency_list>::edge_iterator> es = boost::edges(g);
-        boost::graph_traits<adjacency_list>::edge_iterator e_start = es.first;
-        boost::graph_traits<adjacency_list>::edge_iterator e_end = es.second;
-        while(e_start != e_end) {
-            edgeBetweenness.emplace(*e_start, 0);
-            e_start++;
-        }
-
-
-        std::stack<v_iterator> visitStack; // Stack that holds the inverse order of visited nodes.
-
+    void resetDependencies(graph &g, std::map<boost::adjacency_list<>::vertex_iterator, vertex>& vertices) {
         std::pair<v_iterator, v_iterator> vs = boost::vertices(g);
-        std::map<boost::adjacency_list<>::vertex_iterator, vertex> vertices;
         v_iterator start = vs.first;
         v_iterator end = vs.second;
+
         while(start != end) {
-            vertices.emplace(start, vertex());
+            vertices.at(start).dependency = 0;
             start++;
         }
-
-
-        start = vs.first;
-        for (v_iterator src = start; src != end; src++) { //for each node in the graph
-            resetVariables(src, vertices, start, end);
-            //start breadth first search
-            vertices.at(src).distance = 0;
-
-            std::queue<v_iterator> visitQueue;
-            visitQueue.push(src);
-
-            // While there are still elements in the queue.
-            while (!visitQueue.empty()) {
-                // Pop the first.
-                v_iterator v = visitQueue.front();
-                visitQueue.pop();
-                visitStack.emplace(v);
-
-                // Check the neighbors w of v.
-                for (v_iterator w = start; w != end; w++) {
-                    if (boost::edge(*v, *w, g).second) {
-                        std::cout << boost::edge(*v, *w, g).first << std::endl;
-                        if(vertices.at(w).distance < 0) {
-                            visitQueue.push(w);
-                            vertices.at(w).distance = vertices.at(w).distance + 1;
-                        }
-                        if(vertices.at(w).distance == vertices.at(v).distance + 1) {
-                            vertices.at(w).pred.push_back(v);
-                            vertices.at(w).num_shortest_paths = vertices.at(w).num_shortest_paths + vertices.at(v).num_shortest_paths;
-                        }
-                    }
-                }
-            }
-            // Get the inverse order of visited nodes.
-            while (!visitStack.empty()) {
-                v_iterator w = visitStack.top();
-                visitStack.pop();
-                std::vector<v_iterator> predVector = vertices.at(w).pred;
-                // For each predecessors of node w, do the math!
-                for(int v = 0; v < predVector.size(); v++) {
-                    float c = ((float) vertices.at(predVector[v]).num_shortest_paths / (float) vertices.at(w).num_shortest_paths) * (1.0 + vertices.at(w).dependency);
-                    vertices.at(predVector[v]).dependency += c;
-
-                    // Edge betweenness aggregation part.
-                    auto edgeId = boost::edge(*w, *predVector[v], g).first;
-                    float tempC = edgeBetweenness.at(edgeId);
-                    edgeBetweenness.erase(edgeId);
-                    edgeBetweenness.emplace(edgeId, tempC + c);
-                }
-            }
-            //vertices.at(src).print();
-        }//end outer for loop
-        return edgeBetweenness;
     }
 
-    void girvan_newman(adjacency_list &g) {
-        std::map<boost::graph_traits<adjacency_list>::edge_descriptor, float> e_b_values1 = edge_betweenness(g);
+    void resetAttributes(graph &g, std::map<boost::adjacency_list<>::vertex_iterator, vertex>& vertices) {
+        std::pair<v_iterator, v_iterator> vs = boost::vertices(g);
+        v_iterator start = vs.first;
+        v_iterator end = vs.second;
+
+        while(start != end) {
+            //vertices.at(start).pred = std::list<v_iterator>();
+            vertices.at(start).distance = 2147483647;
+            vertices.at(start).num_shortest_paths = 0;
+            start++;
+        }
+    }
+
+
+    std::map<v_iterator, double> edge_betweenness(graph &g) {
+        std::map<v_iterator, double> edge_betweenness_values;
+        std::queue<v_iterator> v_queue; //Q
+        std::stack<v_iterator> v_stack; //S
+        std::pair<v_iterator, v_iterator> vs = boost::vertices(g);
+        std::map<boost::adjacency_list<>::vertex_iterator, vertex> vertices; //V
+        v_iterator start = vs.first;
+        v_iterator end = vs.second;
+
+        while (start != end) {
+            //std::cout << *start << std::endl;
+            edge_betweenness_values.emplace(start, 0); //initialize to 0
+            vertices.emplace(start, vertex()); //put v in V and initialize dependency to 0
+            start++;
+        }
+        start = vs.first;
+        while (start != end) { //for s in V
+            //initialization
+            resetAttributes(g, vertices);
+            vertices.at(start).num_shortest_paths = 1; //num_shortest_paths[s] <- 1
+            vertices.at(start).distance = 0; //dist[s] <- 0
+
+            v_queue.emplace(start); //enqueue s -> Q
+
+            while (!v_queue.empty()) { //while Q not empty
+                v_iterator v = v_queue.front(); //v
+                v_queue.pop(); //dequeue v <- Q
+                v_stack.emplace(v); //push v -> S
+                v_iterator w = vs.first; //w
+                while (w != end) {//for each
+                    if (boost::edge(*v, *w, g).second) { //such that (v,w) are in E
+                        //path discovery
+                        if (vertices.at(w).distance == 2147483647) {//if dist[w] = infinity
+                            vertices.at(w).distance = vertices.at(v).distance + 1; //dist[w] <- dist[v] + 1
+                            v_queue.emplace(w); //enqueue w -> Q
+                        }
+                            //path counting
+                        else if (vertices.at(w).distance == vertices.at(v).distance + 1) { //if dist[w] = dist[v] + 1
+                            vertices.at(w).num_shortest_paths = vertices.at(w).num_shortest_paths + vertices.at(
+                                    v).num_shortest_paths; //num_shortest_paths[w] = /num_shortest_paths[w] + /num_shortest_paths[v]
+                            vertices.at(w).pred.push_back(v); //append v -> Pred[w]
+                        }
+                    }
+                    w++;
+                }//end foreach
+            }//end while Q not empty
+
+            //accumulation
+            resetDependencies(g, vertices); //for v in V do dependency[v] <- 0
+            while (!v_stack.empty()) { //while S not empty
+                v_iterator w = v_stack.top(); //pop w <- S
+                v_stack.pop(); //pop w <- S
+                std::vector<v_iterator> curr_pred = vertices.at(w).pred;
+                for (auto &v : curr_pred) {//for v in Pred[w]
+                    double test = vertices.at(v).dependency +
+                                  ((double)vertices.at(v).num_shortest_paths / (double)vertices.at(w).num_shortest_paths)
+                                  * (1 + vertices.at(w).dependency);
+                    vertices.at(v).dependency = test;
+                }
+                if (*w != *start) {//if w != s
+                    edge_betweenness_values.at(w) = edge_betweenness_values.at(w) + vertices.at(w).dependency; //cB[w] <- cB[w] + dependency[w]
+                }
+            }//end while S not empty
+            start++;
+        }//end for s in V
+
+        return edge_betweenness_values;
+    }
+
+    void girvan_newman(graph &g) {
+        std::map<v_iterator, double> e_b_values1 = edge_betweenness(g);
 
 //        for (auto &pair: e_b_values1) {
 //            std::cout << pair.first << ": " << pair.second << std::endl;
@@ -172,7 +153,7 @@ namespace algos {
 
 
     void parse(std::ifstream &graphml_file) {
-        adjacency_list g;
+        graph g;
         boost::dynamic_properties dp;
         boost::read_graphml(graphml_file, g, dp);
         std::ofstream test("output.dot");
