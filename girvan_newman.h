@@ -27,6 +27,12 @@ namespace algos {
             num_shortest_paths = 0;
             dependency = 0;
         }
+         void print() {
+            std::cout << "distance: " << distance << std::endl;
+             std::cout << "num_shortest_paths: " << num_shortest_paths << std::endl;
+             std::cout << "dependency: " << dependency << std::endl;
+
+         }
 
         int distance;
         std::vector<v_iterator> pred;
@@ -66,12 +72,16 @@ namespace algos {
 
 
     // Clears the variables or re-initializes to 0, so that they are ready for the next loop.
-    void resetVariables(v_iterator src, std::map<boost::adjacency_list<>::vertex_iterator, vertex>& vertices) {
+    void resetVariables(v_iterator src, std::map<boost::adjacency_list<>::vertex_iterator, vertex>& vertices, v_iterator start, v_iterator end) {
         vertices.at(src).num_shortest_paths = 0;
-
         vertices.at(src).dependency = 0;
-
         vertices.at(src).pred.clear();
+
+        //all other dist except src are -1
+        while(start != end) {
+            vertices.at(start).distance = -1;
+            start++;
+        }
     }
 
 
@@ -97,11 +107,14 @@ namespace algos {
             vertices.emplace(start, vertex());
             start++;
         }
+
+
         start = vs.first;
         for (v_iterator src = start; src != end; src++) { //for each node in the graph
-            resetVariables(src, vertices);
+            resetVariables(src, vertices, start, end);
+            //start breadth first search
+            vertices.at(src).distance = 0;
 
-            // Queue used for the Bfs algorithm.
             std::queue<v_iterator> visitQueue;
             visitQueue.push(src);
 
@@ -115,6 +128,7 @@ namespace algos {
                 // Check the neighbors w of v.
                 for (v_iterator w = start; w != end; w++) {
                     if (boost::edge(*v, *w, g).second) {
+                        std::cout << boost::edge(*v, *w, g).first << std::endl;
                         if(vertices.at(w).distance < 0) {
                             visitQueue.push(w);
                             vertices.at(w).distance = vertices.at(w).distance + 1;
@@ -143,6 +157,7 @@ namespace algos {
                     edgeBetweenness.emplace(edgeId, tempC + c);
                 }
             }
+            //vertices.at(src).print();
         }//end outer for loop
         return edgeBetweenness;
     }
@@ -150,9 +165,9 @@ namespace algos {
     void girvan_newman(adjacency_list &g) {
         std::map<boost::graph_traits<adjacency_list>::edge_descriptor, float> e_b_values1 = edge_betweenness(g);
 
-        for (auto &pair: e_b_values1) {
-            std::cout << pair.first << ": " << pair.second << std::endl;
-        }
+//        for (auto &pair: e_b_values1) {
+//            std::cout << pair.first << ": " << pair.second << std::endl;
+//        }
     }
 
 

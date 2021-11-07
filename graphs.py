@@ -130,7 +130,7 @@ for vertex1 in community4:
             num_edges += 1
             g.add_edge(vertex1, vertex2)
 
-e_b_values = nx.betweenness_centrality(g)
+e_b_values = nx.edge_betweenness_centrality(g)
 
 nx.write_graphml(g, "input.grapml")
 nx.draw(g)
