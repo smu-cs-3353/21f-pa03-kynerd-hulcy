@@ -34,11 +34,11 @@ int main() {
     std::pair<boost::adjacency_list<>::vertex_iterator, boost::adjacency_list<>::vertex_iterator> vs = boost::vertices(g);
     boost::adjacency_list<>::vertex_iterator start = vs.first;
     boost::adjacency_list<>::vertex_iterator end = vs.second;
-    boost::adjacency_list<>::vertex_iterator test = start + 3;
+    boost::adjacency_list<>::vertex_iterator test = start + 6;
 
 
-    boost::array<boost::adjacency_list<>::vertex_descriptor, 40> predecessors;
-    boost::array<int, 40> distances{{0}};
+    boost::array<boost::adjacency_list<>::vertex_descriptor, 10> predecessors;
+    boost::array<int, 10> distances{{0}};
     predecessors[*test] = *test;
 
     boost::breadth_first_search(g, *test,
@@ -51,16 +51,32 @@ int main() {
                                                                                    boost::on_tree_edge{})))));
 
 
-    std::for_each(distances.begin(), distances.end(),
-                  [](int d){ std::cout << d << '\n'; });
-
     boost::adjacency_list<>::vertex_descriptor p = *start;
+
+    int count = 0;
     while (p != *test)
     {
         std::cout << p << '\n';
+        count++;
         p = predecessors[p];
     }
     std::cout << p << '\n';
+    int num_shortest_paths = 0;
+
+    std::cout<< "distances" << std::endl;
+    for(int i = 0; i < 10; i++) {
+        std::cout << distances[i] << std::endl;
+    }
+
+
+
+//    std::for_each(distances.begin(), distances.end(),
+//                  [](int d){
+//        //std::cout << d << '\n';
+//        if(d == count) {
+//            num_shortest_paths++;
+//        }
+//    });
 
 
 }
