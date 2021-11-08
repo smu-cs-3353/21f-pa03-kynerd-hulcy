@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import random
 
 p_in = .99
-p_out = .01
+p_out = .05
 
 
 def add(probability):
@@ -18,10 +18,10 @@ g = nx.Graph()
 # community3 = list(range(65, 97))
 # community4 = list(range(97, 129))
 
-community1 = list(range(1, 11))
-community2 = list(range(11, 21))
-community3 = list(range(21, 31))
-community4 = list(range(31, 41))
+community1 = list(range(1, 4))
+community2 = list(range(4, 7))
+community3 = list(range(7, 10))
+community4 = list(range(10, 13))
 
 edges = {new_list: [] for new_list in range(1, 41)}  # change this
 #
@@ -130,7 +130,11 @@ for vertex1 in community4:
             num_edges += 1
             g.add_edge(vertex1, vertex2)
 
-e_b_values = nx.betweenness_centrality(g)
+b_values = nx.betweenness_centrality(g)
+e_b_values = nx.edge_betweenness_centrality(g)
+
+print(b_values)
+print(e_b_values)
 
 nx.write_graphml(g, "input.grapml")
 nx.draw(g)
@@ -139,4 +143,4 @@ plt.savefig("testOutput.png")
 # print("p_in = " + str(p_in) + ", p_out = " + str(p_out))
 # print("num_edges = " + str(num_edges))
 # print("num_edges / num_vertices = " + str(num_edges / 128))
-print(e_b_values)
+# print(e_b_values)
