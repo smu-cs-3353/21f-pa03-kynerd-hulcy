@@ -22,47 +22,10 @@
 
 namespace algos {
 
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, uint32_t, uint32_t, boost::no_property> graph;
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, uint32_t, uint32_t, boost::no_property>::vertex_iterator v_iterator;
-    typedef boost::graph_traits<graph> v_descriptor;
-//
-//    class MyVisitor : public boost::default_bfs_visitor
-//    {
-//    public:
-//        std::list<std::list<v_descriptor>> paths;
-//    };
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
+    //typedef boost::graph_traits<graph> v_descriptor;
 
-//
-//    class bfs_visitor {
-//    public:
-//        void initialize_vertex(const graph::vertex_descriptor &s, graph &g) {
-//            std::cout << "Initialize: " << g[s] << std::endl;
-//        }
-//        void discover_vertex(const graph::vertex_descriptor &s, graph &g) {
-//            std::cout << "Discover: " << g[s] << std::endl;
-//        }
-//        void examine_vertex(const graph::vertex_descriptor &s, graph &g) {
-//            std::cout << "Examine vertex: " << g[s] << std::endl;
-//        }
-//        void examine_edge(const graph::edge_descriptor &e, graph &g) {
-//            std::cout << "Examine edge: " << g[e] << std::endl;
-//        }
-//        void tree_edge(const graph::edge_descriptor &e, graph &g) {
-//            std::cout << "Tree edge: " << g[e] << std::endl;
-//        }
-//        void non_tree_edge(const graph::edge_descriptor &e, graph &g) {
-//            std::cout << "Non-Tree edge: " << g[e] << std::endl;
-//        }
-//        void gray_target(const graph::edge_descriptor &e, graph &g) {
-//            std::cout << "Gray target: " << g[e] << std::endl;
-//        }
-//        void black_target(const graph::edge_descriptor &e, graph &g) {
-//            std::cout << "Black target: " << g[e] << std::endl;
-//        }
-//        void finish_vertex(const graph::vertex_descriptor &s, graph &g) {
-//            std::cout << "Finish vertex: " << g[s] << std::endl;
-//        }
-//    };
 
     struct vertex {
         vertex() {
@@ -81,11 +44,10 @@ namespace algos {
     std::map<v_iterator, double> edge_betweenness(graph &g) {
         std::map<v_iterator, vertex> vertex_properties;
         std::map<v_iterator, double> centrality_map;
-        std::queue<v_iterator> v_queue;
-        std::stack<v_iterator> v_stack;
+
         auto vs = boost::vertices(g);
         auto counter = vs.first;
-        auto start_of_graph = vs.first;
+        auto current_vertex = vs.first;
         auto end_of_graph = vs.second;
         while (counter != end_of_graph) { // initialization
             centrality_map.emplace(counter, 0);
@@ -93,10 +55,11 @@ namespace algos {
             counter++;
         }
 
+        while (current_vertex != end_of_graph) {
+            std::queue<v_iterator> v_queue;
+            std::stack<v_iterator> v_stack;
 
-        while (start_of_graph != end_of_graph) {
-
-            counter = start_of_graph;
+            counter = current_vertex;
             while (counter != end_of_graph) { // reinitialization for new vertex
                 vertex_properties.at(counter).pred.clear();
                 vertex_properties.at(counter).distance = -1;
@@ -104,10 +67,9 @@ namespace algos {
                 counter++;
             }
 
-            vertex_properties.at(start_of_graph).distance = 0;
-            vertex_properties.at(start_of_graph).num_shortest_paths = 1;
-            //vertex_properties.at(start_of_graph).dependency = 0;
-            v_queue.push(start_of_graph);
+            vertex_properties.at(current_vertex).distance = 0;
+            vertex_properties.at(current_vertex).num_shortest_paths = 1;
+            v_queue.push(current_vertex);
 
             while (!v_queue.empty()) {
                 auto vertex1 = v_queue.front();
@@ -118,40 +80,38 @@ namespace algos {
                 while (vertex2 != end_of_graph) {
                     if (boost::edge(*vertex1, *vertex2, g).second) {
                         if (vertex_properties.at(vertex2).distance == -1) {
-                            vertex_properties.at(vertex2).distance = vertex_properties.at(vertex1).distance + 1;
-                            //vertex_properties.at(vertex2).pred.push_back(vertex1);
                             v_queue.push(vertex2);
+                            vertex_properties.at(vertex2).distance = vertex_properties.at(vertex1).distance + 1;
                         }
                         if (vertex_properties.at(vertex2).distance == vertex_properties.at(vertex1).distance + 1) {
                             vertex_properties.at(vertex2).num_shortest_paths += vertex_properties.at(vertex1).num_shortest_paths;
                             vertex_properties.at(vertex2).pred.push_back(vertex1);
-
                         }
                     }
                     vertex2++;
                 } // end of edge checks
 
-                while (!v_stack.empty()) {
-                    vertex2 = v_stack.top();
-                    v_stack.pop();
-                    auto vertex2_pred = vertex_properties.at(vertex2).pred;
-                    for (auto & predecessor : vertex2_pred) {
-                        vertex_properties.at(predecessor).dependency +=
-                                ((double)vertex_properties.at(predecessor).num_shortest_paths / (double)vertex_properties.at(vertex2).num_shortest_paths)
-                                * (1 + vertex_properties.at(vertex2).dependency);
-                    }
-                    if (vertex2 != start_of_graph) {
-                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency;
-                    }
-                } // end of stack loop
-//                counter = vs.first;
-//                while (counter != end_of_graph) {
-//                    vertex_properties.at(counter).dependency = 0;
-//                    counter++;
-//                }
             } // end of inner loop
 
-            start_of_graph++;
+            counter = vs.first;
+            while (counter != end_of_graph) {
+                vertex_properties.at(counter).dependency = 0;
+                counter++;
+            }
+
+            while (!v_stack.empty()) {
+                auto vertex2 = v_stack.top();
+                v_stack.pop();
+                auto vertex2_pred = vertex_properties.at(vertex2).pred;
+                    for (auto &predecessor: vertex2_pred) {
+                        vertex_properties.at(predecessor).dependency += ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
+                    }
+                    if (vertex2 != current_vertex) {
+                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency;
+                    }
+            } // end of stack loop
+
+            current_vertex++;
         } // end of outer loop
         return centrality_map;
     }
@@ -169,7 +129,15 @@ namespace algos {
         std::cout << "1: " << centrality_map[1] << std::endl;
         std::cout << "2: " << centrality_map[2] << std::endl;
         std::cout << "3: " << centrality_map[3] << std::endl;
-        std::cout << "4: " << centrality_map[4] << std::endl << std::endl;
+        //std::cout << "4: " << centrality_map[4] << std::endl;
+//        std::cout << "5: " << centrality_map[5] << std::endl;
+//        std::cout << "6: " << centrality_map[6] << std::endl;
+//        std::cout << "7: " << centrality_map[7] << std::endl;
+//        std::cout << "8: " << centrality_map[8] << std::endl;
+//        std::cout << "9: " << centrality_map[9] << std::endl;
+//        std::cout << "10: " << centrality_map[10] << std::endl;
+//        std::cout << "11: " << centrality_map[11] << std::endl;
+//        std::cout << "12: " << centrality_map[12] << std::endl << std::endl;
 
 
         std::cout << "Ours:" << std::endl;

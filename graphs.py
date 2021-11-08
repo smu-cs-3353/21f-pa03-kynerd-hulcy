@@ -136,7 +136,7 @@ e_b_values = nx.edge_betweenness_centrality(g)
 print(b_values)
 print(e_b_values)
 
-nx.write_graphml(g, "input.grapml")
+nx.write_graphml(g, "input1.grapml")
 nx.draw(g)
 plt.savefig("testOutput.png")
 
