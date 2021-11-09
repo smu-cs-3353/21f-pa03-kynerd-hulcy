@@ -4,7 +4,7 @@ project(21f_pa03_kynerd_hulcy)
 
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(Boost 1.76.0 COMPONENTS graph)
+find_package(Boost 1.65.0 COMPONENTS graph)
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})

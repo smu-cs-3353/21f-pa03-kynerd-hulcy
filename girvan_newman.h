@@ -56,10 +56,13 @@ namespace algos {
         }
 
         while (current_vertex != end_of_graph) {
+            if(*current_vertex == 1) {
+                std::cout << "current node: "<< *current_vertex << std:: endl;
+            }
             std::queue<v_iterator> v_queue;
             std::stack<v_iterator> v_stack;
 
-            counter = current_vertex;
+            counter = vs.first;
             while (counter != end_of_graph) { // reinitialization for new vertex
                 vertex_properties.at(counter).pred.clear();
                 vertex_properties.at(counter).distance = -1;
@@ -79,6 +82,7 @@ namespace algos {
                 auto vertex2 = vs.first;
                 while (vertex2 != end_of_graph) {
                     if (boost::edge(*vertex1, *vertex2, g).second) {
+                        std::cout << *vertex1 << ", " << *vertex2 << std:: endl;
                         if (vertex_properties.at(vertex2).distance == -1) {
                             v_queue.push(vertex2);
                             vertex_properties.at(vertex2).distance = vertex_properties.at(vertex1).distance + 1;
@@ -104,15 +108,28 @@ namespace algos {
                 v_stack.pop();
                 auto vertex2_pred = vertex_properties.at(vertex2).pred;
                     for (auto &predecessor: vertex2_pred) {
+                        if(*predecessor == 0) {
+                            std::cout << "at 0" << std::endl;
+                        }
                         vertex_properties.at(predecessor).dependency += ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
+                        if (vertex_properties.at(predecessor).dependency > 0) {
+                            std::cout << "not 0" << std::endl;
+                        }
                     }
                     if (vertex2 != current_vertex) {
-                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency;
+                        if(*vertex2 == 0) {
+                            std::cout << "at 0" << std::endl;
+                        }
+                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency/2;
                     }
             } // end of stack loop
 
             current_vertex++;
         } // end of outer loop
+//        for (auto it = centrality_map.begin(); it != centrality_map.end(); it++)
+//        {
+//            it->second = it->second/2;
+//        }
         return centrality_map;
     }
 
@@ -129,7 +146,7 @@ namespace algos {
         std::cout << "1: " << centrality_map[1] << std::endl;
         std::cout << "2: " << centrality_map[2] << std::endl;
         std::cout << "3: " << centrality_map[3] << std::endl;
-        //std::cout << "4: " << centrality_map[4] << std::endl;
+        std::cout << "4: " << centrality_map[4] << std::endl;
 //        std::cout << "5: " << centrality_map[5] << std::endl;
 //        std::cout << "6: " << centrality_map[6] << std::endl;
 //        std::cout << "7: " << centrality_map[7] << std::endl;
