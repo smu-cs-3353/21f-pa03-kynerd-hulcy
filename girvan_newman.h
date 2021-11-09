@@ -24,7 +24,9 @@ namespace algos {
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::edge_iterator e_iterator;
     //typedef boost::graph_traits<graph> v_descriptor;
+    typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;
 
 
     struct vertex {
@@ -41,16 +43,24 @@ namespace algos {
     };
 
 
-    std::map<v_iterator, double> edge_betweenness(graph &g) {
+    std::map<e_descriptor, double> edge_betweenness(graph &g) {
         std::map<v_iterator, vertex> vertex_properties;
-        std::map<v_iterator, double> centrality_map;
+        std::map<e_descriptor, double> centrality_map;
+
+        auto es = boost::edges(g);
+        auto edge_counter = es.first;
+        auto last_edge = es.second;
+        while (edge_counter != last_edge) { // initialization
+            centrality_map.emplace(*edge_counter, 0);
+            edge_counter++;
+        }
 
         auto vs = boost::vertices(g);
         auto counter = vs.first;
         auto current_vertex = vs.first;
         auto end_of_graph = vs.second;
         while (counter != end_of_graph) { // initialization
-            centrality_map.emplace(counter, 0);
+            //centrality_map.emplace(counter, 0);
             vertex_properties.emplace(counter, vertex());
             counter++;
         }
@@ -108,34 +118,25 @@ namespace algos {
                 v_stack.pop();
                 auto vertex2_pred = vertex_properties.at(vertex2).pred;
                     for (auto &predecessor: vertex2_pred) {
-                        if(*predecessor == 0) {
-                            std::cout << "at 0" << std::endl;
-                        }
                         vertex_properties.at(predecessor).dependency += ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
-                        if (vertex_properties.at(predecessor).dependency > 0) {
-                            std::cout << "not 0" << std::endl;
-                        }
+                        e_descriptor edge_desc = boost::edge(*predecessor, *vertex2, g).first;
+                        double tempC = centrality_map.at(edge_desc);
+                        centrality_map.erase(edge_desc);
+                        centrality_map.insert(std::pair<e_descriptor, double>(edge_desc, tempC + vertex_properties.at(predecessor).dependency));
                     }
-                    if (vertex2 != current_vertex) {
-                        if(*vertex2 == 0) {
-                            std::cout << "at 0" << std::endl;
-                        }
-                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency/2;
-                    }
+//                    if (vertex2 != current_vertex) {
+//                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency/2;
+//                    }
             } // end of stack loop
 
             current_vertex++;
         } // end of outer loop
-//        for (auto it = centrality_map.begin(); it != centrality_map.end(); it++)
-//        {
-//            it->second = it->second/2;
-//        }
         return centrality_map;
     }
 
 
     void girvan_newman(graph &g) {
-        std::map<v_iterator, double> e_b_values1 = edge_betweenness(g);
+        std::map<e_descriptor, double> e_b_values1 = edge_betweenness(g);
 
         boost::shared_array_property_map<double, boost::property_map<graph, boost::vertex_index_t>::const_type>
                 centrality_map(num_vertices(g), get(boost::vertex_index, g));
@@ -159,7 +160,7 @@ namespace algos {
 
         std::cout << "Ours:" << std::endl;
         for (auto& pair : e_b_values1 ) {
-            std::cout << *pair.first << ": " << pair.second << std::endl;
+            std::cout << pair.first << ": " << pair.second << std::endl;
         }
     };
 
