@@ -24,6 +24,8 @@ namespace algos {
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::edge_iterator e_iterator;
+    typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;
     //typedef boost::graph_traits<graph> v_descriptor;
 
 
@@ -41,7 +43,8 @@ namespace algos {
     };
 
 
-    std::map<v_iterator, double> edge_betweenness(graph &g) {
+
+    std::map<v_iterator, double> vertex_betweenness(graph &g) {
         std::map<v_iterator, vertex> vertex_properties;
         std::map<v_iterator, double> centrality_map;
 
@@ -56,9 +59,9 @@ namespace algos {
         }
 
         while (current_vertex != end_of_graph) {
-            if(*current_vertex == 1) {
-                std::cout << "current node: "<< *current_vertex << std:: endl;
-            }
+//            if(*current_vertex == 1) {
+//                //std::cout << "current node: "<< *current_vertex << std:: endl;
+//            }
             std::queue<v_iterator> v_queue;
             std::stack<v_iterator> v_stack;
 
@@ -107,21 +110,21 @@ namespace algos {
                 auto vertex2 = v_stack.top();
                 v_stack.pop();
                 auto vertex2_pred = vertex_properties.at(vertex2).pred;
-                    for (auto &predecessor: vertex2_pred) {
-                        if(*predecessor == 0) {
-                            std::cout << "at 0" << std::endl;
-                        }
-                        vertex_properties.at(predecessor).dependency += ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
-                        if (vertex_properties.at(predecessor).dependency > 0) {
-                            std::cout << "not 0" << std::endl;
-                        }
-                    }
-                    if (vertex2 != current_vertex) {
-                        if(*vertex2 == 0) {
-                            std::cout << "at 0" << std::endl;
-                        }
-                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency/2;
-                    }
+                for (auto &predecessor: vertex2_pred) {
+//                    if(*predecessor == 0) {
+//                        std::cout << "at 0" << std::endl;
+//                    }
+                    vertex_properties.at(predecessor).dependency += ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
+//                    if (vertex_properties.at(predecessor).dependency > 0) {
+//                        std::cout << "not 0" << std::endl;
+//                    }
+                }
+                if (vertex2 != current_vertex) {
+//                    if(*vertex2 == 0) {
+//                        std::cout << "at 0" << std::endl;
+//                    }
+                    centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency/2;
+                }
             } // end of stack loop
 
             current_vertex++;
@@ -135,32 +138,45 @@ namespace algos {
 
 
     void girvan_newman(graph &g) {
-        std::map<v_iterator, double> e_b_values1 = edge_betweenness(g);
-
-        boost::shared_array_property_map<double, boost::property_map<graph, boost::vertex_index_t>::const_type>
-                centrality_map(num_vertices(g), get(boost::vertex_index, g));
-        boost::brandes_betweenness_centrality(g, centrality_map);
-
-        std::cout << "Correct:" << std::endl;
-        std::cout << "0: " << centrality_map[0] << std::endl;
-        std::cout << "1: " << centrality_map[1] << std::endl;
-        std::cout << "2: " << centrality_map[2] << std::endl;
-        std::cout << "3: " << centrality_map[3] << std::endl;
-        std::cout << "4: " << centrality_map[4] << std::endl;
-//        std::cout << "5: " << centrality_map[5] << std::endl;
-//        std::cout << "6: " << centrality_map[6] << std::endl;
-//        std::cout << "7: " << centrality_map[7] << std::endl;
-//        std::cout << "8: " << centrality_map[8] << std::endl;
-//        std::cout << "9: " << centrality_map[9] << std::endl;
-//        std::cout << "10: " << centrality_map[10] << std::endl;
-//        std::cout << "11: " << centrality_map[11] << std::endl;
-//        std::cout << "12: " << centrality_map[12] << std::endl << std::endl;
+        //std::map<v_iterator, double> e_b_values1 = edge_betweenness(g);
 
 
-        std::cout << "Ours:" << std::endl;
-        for (auto& pair : e_b_values1 ) {
-            std::cout << *pair.first << ": " << pair.second << std::endl;
+
+        double highest_betweenness = 0;
+        double prev_betweenness = 0;
+        e_iterator edge_to_remove;
+
+        while (true) {
+            std::map<e_iterator, double> centrality_map; // = edge_betweenness(g);
+            for (auto & pair : centrality_map) {
+                if (pair.second > highest_betweenness) {
+                    highest_betweenness = pair.second;
+                    edge_to_remove = pair.first;
+                }
+            }
+            if (prev_betweenness == highest_betweenness) {
+                break;
+            }
+            g.remove_edge(*edge_to_remove);
+            centrality_map.erase(edge_to_remove);
+            prev_betweenness = highest_betweenness;
         }
+
+        std::map<e_iterator, double> centrality_map; // = edge_betweenness(g);
+        while (!centrality_map.empty()) {
+
+            for (auto & pair : centrality_map) {
+                if (pair.second > highest_betweenness) {
+                    highest_betweenness = pair.second;
+                    edge_to_remove = pair.first;
+                }
+            }
+            g.remove_edge(*edge_to_remove);
+            centrality_map.erase(edge_to_remove);
+
+            centrality_map; // = edge_betweenness(g); // recalculate betweenness
+        }
+
     };
 
 
