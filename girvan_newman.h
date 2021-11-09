@@ -42,90 +42,111 @@ namespace algos {
         double dependency;
     };
 
+    struct edge {
+        edge() {
+            distance = -1;
+            pred = std::vector<e_iterator>();
+            num_shortest_paths = 0;
+            dependency = 0;
+        }
+        int distance;
+        std::vector<e_iterator> pred;
+        int num_shortest_paths;
+        double dependency;
+    };
+
+    bool shareNode(e_descriptor first, e_descriptor second) {
+        if(first.m_source == second.m_source || first.m_source == second.m_target || first.m_target== second.m_source || first.m_target== second.m_target) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
 
     std::map<e_descriptor, double> edge_betweenness(graph &g) {
         std::map<v_iterator, vertex> vertex_properties;
+        std::map<e_iterator, vertex> edge_properties;
         std::map<e_descriptor, double> centrality_map;
 
         auto es = boost::edges(g);
         auto edge_counter = es.first;
-        auto last_edge = es.second;
-        while (edge_counter != last_edge) { // initialization
+        auto current_edge = es.first;
+        auto end_of_graph = es.second;
+        while (edge_counter != end_of_graph) { // initialization
             centrality_map.emplace(*edge_counter, 0);
+            edge_properties.emplace(edge_counter, edge());
             edge_counter++;
         }
 
-        auto vs = boost::vertices(g);
-        auto counter = vs.first;
-        auto current_vertex = vs.first;
-        auto end_of_graph = vs.second;
-        while (counter != end_of_graph) { // initialization
-            //centrality_map.emplace(counter, 0);
-            vertex_properties.emplace(counter, vertex());
-            counter++;
-        }
+//        auto vs = boost::vertices(g);
+//        auto counter = vs.first;
+//        auto current_vertex = vs.first;
+//        auto end_of_graph = vs.second;
+//        while (counter != end_of_graph) { // initialization
+//            //centrality_map.emplace(counter, 0);
+//            vertex_properties.emplace(counter, vertex());
+//            counter++;
+//        }
 
-        while (current_vertex != end_of_graph) {
-            std::queue<v_iterator> v_queue;
-            std::stack<v_iterator> v_stack;
+        while (current_edge != end_of_graph) {
+            std::queue<e_iterator> e_queue;
+            std::stack<e_iterator> e_stack;
 
-            counter = vs.first;
-            while (counter != end_of_graph) { // reinitialization for new vertex
-                vertex_properties.at(counter).pred.clear();
-                vertex_properties.at(counter).distance = -1;
-                vertex_properties.at(counter).num_shortest_paths = 0;
-                counter++;
+            edge_counter = es.first;
+            while (edge_counter != end_of_graph) { // reinitialization for new vertex
+                edge_properties.at(edge_counter).pred.clear();
+                edge_properties.at(edge_counter).distance = -1;
+                edge_properties.at(edge_counter).num_shortest_paths = 0;
+                edge_counter++;
             }
 
-            vertex_properties.at(current_vertex).distance = 0;
-            vertex_properties.at(current_vertex).num_shortest_paths = 1;
-            v_queue.push(current_vertex);
+            edge_properties.at(edge_counter).distance = 0;
+            edge_properties.at(edge_counter).num_shortest_paths = 1;
+            e_queue.push(edge_counter);
 
-            while (!v_queue.empty()) {
-                auto vertex1 = v_queue.front();
-                v_queue.pop();
-                v_stack.push(vertex1);
+            while (!e_queue.empty()) {
+                auto edge1 = e_queue.front();
+                e_queue.pop();
+                e_stack.push(edge1);
 
-                auto vertex2 = vs.first;
-                while (vertex2 != end_of_graph) {
-                    if (boost::edge(*vertex1, *vertex2, g).second) {
-                        if (vertex_properties.at(vertex2).distance == -1) {
-                            v_queue.push(vertex2);
-                            vertex_properties.at(vertex2).distance = vertex_properties.at(vertex1).distance + 1;
+                auto edge2 = es.first;
+                while (edge2 != end_of_graph) {
+                    if (shareNode(*edge1, *edge2)) {
+                        if (edge_properties.at(edge2).distance == -1) {
+                            e_queue.push(edge2);
+                            edge_properties.at(edge2).distance = edge_properties.at(edge1).distance + 1;
                         }
-                        if (vertex_properties.at(vertex2).distance == vertex_properties.at(vertex1).distance + 1) {
-                            vertex_properties.at(vertex2).num_shortest_paths += vertex_properties.at(vertex1).num_shortest_paths;
-                            vertex_properties.at(vertex2).pred.push_back(vertex1);
+                        if (edge_properties.at(edge2).distance == edge_properties.at(edge1).distance + 1) {
+                            edge_properties.at(edge2).num_shortest_paths += edge_properties.at(edge1).num_shortest_paths;
+                            edge_properties.at(edge2).pred.push_back(edge1);
                         }
                     }
-                    vertex2++;
+                    edge2++;
                 } // end of edge checks
 
             } // end of inner loop
 
-            counter = vs.first;
-            while (counter != end_of_graph) {
-                vertex_properties.at(counter).dependency = 0;
-                counter++;
+            edge_counter = es.first;
+            while (edge_counter != end_of_graph) {
+                edge_properties.at(edge_counter).dependency = 0;
+                edge_counter++;
             }
 
-            while (!v_stack.empty()) {
-                auto vertex2 = v_stack.top();
-                v_stack.pop();
-                auto vertex2_pred = vertex_properties.at(vertex2).pred;
-                    for (auto &predecessor: vertex2_pred) {
-                        vertex_properties.at(predecessor).dependency += ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
-                        e_descriptor edge_desc = boost::edge(*predecessor, *vertex2, g).first;
-                        double tempC = centrality_map.at(edge_desc);
-                        centrality_map.erase(edge_desc);
-                        centrality_map.insert(std::pair<e_descriptor, double>(edge_desc, tempC + vertex_properties.at(predecessor).dependency/2));
+            while (!e_stack.empty()) {
+                auto edge2 = e_stack.top();
+                e_stack.pop();
+                auto edge2_pred = edge_properties.at(edge2).pred;
+                    for (auto &predecessor: edge2_pred) {
+                        edge_properties.at(predecessor).dependency += ((double) edge_properties.at(predecessor).num_shortest_paths / (double) edge_properties.at(edge2).num_shortest_paths) * (1 + edge_properties.at(edge2).dependency);
                     }
-//                    if (vertex2 != current_vertex) {
-//                        centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency/2;
-//                    }
+                    if (edge2 != current_edge) {
+                        centrality_map.at(edge2) += edge_properties.at(edge2).dependency/2;
+                    }
             } // end of stack loop
 
-            current_vertex++;
+            current_edge++;
         } // end of outer loop
         return centrality_map;
     }
