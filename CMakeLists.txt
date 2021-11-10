@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 find_package(Boost 1.65.0 COMPONENTS graph)
 
+set(CMAKE_CXX_FLAGS_DEBUG "-O3")
+
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
     add_executable(21f_pa03_kynerd_hulcy main.cpp girvan_newman.h)

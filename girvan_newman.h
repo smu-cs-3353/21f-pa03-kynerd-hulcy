@@ -16,17 +16,13 @@
 #include <boost/concept/assert.hpp>
 #include <boost/graph/visitors.hpp>
 #include <boost/graph/betweenness_centrality.hpp>
-
-
-
+#include <boost/graph/connected_components.hpp>
 
 namespace algos {
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
-    typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;
-//    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::edge_descriptor e_descriptor;
-
+    typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;\
 
     struct vertex {
         vertex() {
@@ -126,56 +122,40 @@ namespace algos {
             } // end of stack loop
 
             current_vertex++;
+
         } // end of outer loop
-        for (auto it = edge_centrality_map.begin(); it != edge_centrality_map.end(); it++)
+        for (auto & it : edge_centrality_map)
         {
-            it->second = it->second/2;
+            it.second = it.second/2;
         }
         return edge_centrality_map;
     }
 
 
     void girvan_newman(graph &g) {
-        std::map<e_descriptor, double> e_b_values1 = edge_betweenness(g);
+        std::vector<int> component (boost::num_vertices (g));
+        size_t num_components = boost::connected_components (g, &component[0]);
+        std::map<e_descriptor , double> betweenness_map = edge_betweenness(g);
+        //std::cout << num_components << std::endl;
 
-//        boost::shared_array_property_map<double, boost::property_map<graph, boost::vertex_index_t>::const_type>
-//                centrality_map(num_vertices(g), get(boost::vertex_index, g));
-//        boost::brandes_betweenness_centrality(g, centrality_map);
-//
-//        std::cout << "Correct:" << std::endl;
-//        std::cout << "0: " << centrality_map[0] << std::endl;
-//        std::cout << "1: " << centrality_map[1] << std::endl;
-//        std::cout << "2: " << centrality_map[2] << std::endl;
-//        std::cout << "3: " << centrality_map[3] << std::endl;
-//        std::cout << "4: " << centrality_map[4] << std::endl;
-//        std::cout << "5: " << centrality_map[5] << std::endl;
-//        std::cout << "6: " << centrality_map[6] << std::endl;
-//        std::cout << "7: " << centrality_map[7] << std::endl;
-//        std::cout << "8: " << centrality_map[8] << std::endl;
-//        std::cout << "9: " << centrality_map[9] << std::endl;
-//        std::cout << "10: " << centrality_map[10] << std::endl;
-//        std::cout << "11: " << centrality_map[11] << std::endl;
-//        std::cout << "12: " << centrality_map[12] << std::endl << std::endl;
-
-
-        std::cout << "Ours:" << std::endl;
-        for (auto& pair : e_b_values1 ) {
-            std::cout << pair.first << ": " << pair.second << std::endl;
+        while (num_components < 4 && !betweenness_map.empty()) {
+            //betweenness_map = edge_betweenness(g);
+            double highest_betweenness = 0;
+            e_descriptor edge_to_remove;
+            for (auto & pair : betweenness_map) {
+                if (pair.second > highest_betweenness) {
+                    highest_betweenness = pair.second;
+                    edge_to_remove = pair.first;
+                }
+            }
+            //std::cout << "removing: " << edge_to_remove.m_source <<", "<< edge_to_remove.m_target << std::endl;
+            g.remove_edge(edge_to_remove);
+            betweenness_map.erase(edge_to_remove);
+            num_components = boost::connected_components (g, &component[0]);
+            betweenness_map = edge_betweenness(g);
         }
-
-        std::map<e_descriptor, double> edge_centralities;
-        auto ecm = boost::make_assoc_property_map(edge_centralities);
-        boost::brandes_betweenness_centrality(g, boost::edge_centrality_map(ecm));
-
-        std::cout << "Correct Edge Centralities" << std::endl;
-
-        for (auto it = edge_centralities.begin(); it != edge_centralities.end(); it++)
-        {
-            std::cout << it->first    // string (key)
-                      << ':'
-                      << it->second   // string's value
-                      << std::endl;
-        }
+        num_components = boost::connected_components (g, &component[0]);
+        //std::cout << num_components << std::endl;
     };
 
 
@@ -183,13 +163,15 @@ namespace algos {
         graph g;
         boost::dynamic_properties dp;
         boost::read_graphml(graphml_file, g, dp);
-        std::ofstream test("output.dot");
-        boost::write_graphviz(test, g);
 
         girvan_newman(g);
-    }
 
+        std::ofstream test("output.dot");
+        std::ofstream testOutput("output.graphml");
+        boost::write_graphml(testOutput, g, dp);
+        boost::write_graphviz(test, g);
 
+    };
 
 }
 

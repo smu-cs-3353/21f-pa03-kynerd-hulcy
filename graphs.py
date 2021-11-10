@@ -10,13 +10,17 @@ def add(probability):
     return random.random() < probability
 
 
+# test_graph = nx.read_graphml("output.graphml")
+# nx.draw(test_graph)
+
+
 g = nx.Graph()
 
 community1 = list(range(1, 33))
 community2 = list(range(33, 65))
 community3 = list(range(65, 97))
 community4 = list(range(97, 129))
-
+#
 # community1 = list(range(1, 4))
 # community2 = list(range(4, 7))
 # community3 = list(range(7, 10))
@@ -138,7 +142,7 @@ print(e_b_values)
 nx.write_graphml(g, "input1.grapml")
 nx.draw(g)
 plt.savefig("testOutput.png")
-
-print("p_in = " + str(p_in) + ", p_out = " + str(p_out))
-print("num_edges = " + str(num_edges))
-print("num_edges / num_vertices = " + str(num_edges / 128))
+#
+# print("p_in = " + str(p_in) + ", p_out = " + str(p_out))
+# print("num_edges = " + str(num_edges))
+# print("num_edges / num_vertices = " + str(num_edges / 128))
