@@ -1,7 +1,7 @@
 import networkx as nx
 import matplotlib.pyplot as plt
 
-graph = nx.read_graphml("cmake-build-debug/output.graphml")
+graph = nx.read_graphml("../output/output.graphml")
 nx.draw(graph)
 plt.axes([2,2,2,2])
-plt.savefig("output.png")
+plt.savefig("../output/output.png")

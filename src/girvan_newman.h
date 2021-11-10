@@ -18,11 +18,12 @@
 #include <boost/graph/betweenness_centrality.hpp>
 #include <boost/graph/connected_components.hpp>
 
-namespace algos {
+namespace Girvan_Newman {
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
-    typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;\
+    typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;
+
 
     struct vertex {
         vertex() {
@@ -159,17 +160,31 @@ namespace algos {
     };
 
 
-    void parse(std::ifstream &graphml_file) {
+    void run(std::ifstream &graphml_file) {
         graph g;
+
+        std::map<int, std::string> id2label;
+        std::map<int, std::string> id2value;
+        std::map<int, int> id2id;
+        boost::associative_property_map< std::map<int, std::string> >
+                label_map(id2label);
+        boost::associative_property_map< std::map<int, std::string> >
+                value_map(id2value);
+        boost::associative_property_map< std::map<int, int> >
+                id_map(id2id);
+
         boost::dynamic_properties dp;
+
+        dp.property("label", label_map);
+        dp.property("value", value_map);
+        dp.property("id", id_map);
+
         boost::read_graphml(graphml_file, g, dp);
 
         girvan_newman(g);
 
-        std::ofstream test("output.dot");
-        std::ofstream testOutput("output.graphml");
+        std::ofstream testOutput("../output/output.graphml");
         boost::write_graphml(testOutput, g, dp);
-        boost::write_graphviz(test, g);
 
     };
 
