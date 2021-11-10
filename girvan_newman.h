@@ -92,11 +92,13 @@ namespace algos {
                 edge_properties.at(*edge_counter2).pred.clear();
                 edge_properties.at(*edge_counter2).distance = -1;
                 edge_properties.at(*edge_counter2).num_shortest_paths = 0;
+                edge_properties.at(*edge_counter2).dependency = 1;
                 edge_counter2++;
             }
 
             edge_properties.at(*current_edge).distance = 0;
             edge_properties.at(*current_edge).num_shortest_paths = 1;
+            edge_properties.at(*current_edge).dependency = 0;
             e_queue.push(current_edge);
 
             while (!e_queue.empty()) {
@@ -121,11 +123,11 @@ namespace algos {
 
             } // end of inner loop
 
-            edge_counter = es.first;
-            while (edge_counter != end_of_graph) {
-                edge_properties.at(*edge_counter).dependency = 0;
-                edge_counter++;
-            }
+//            edge_counter = es.first;
+//            while (edge_counter != end_of_graph) {
+//                edge_properties.at(*edge_counter).dependency = 0;
+//                edge_counter++;
+//            }
 
             while (!e_stack.empty()) {
                 auto edge2 = e_stack.top();
