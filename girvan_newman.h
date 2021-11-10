@@ -24,7 +24,8 @@ namespace algos {
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
-    //typedef boost::graph_traits<graph> v_descriptor;
+    typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;
+//    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::edge_descriptor e_descriptor;
 
 
     struct vertex {
@@ -41,9 +42,10 @@ namespace algos {
     };
 
 
-    std::map<v_iterator, double> edge_betweenness(graph &g) {
+    std::map<e_descriptor, double> edge_betweenness(graph &g) {
         std::map<v_iterator, vertex> vertex_properties;
         std::map<v_iterator, double> centrality_map;
+        std::map<e_descriptor, double> edge_centrality_map;
 
         auto vs = boost::vertices(g);
         auto counter = vs.first;
@@ -55,10 +57,15 @@ namespace algos {
             counter++;
         }
 
+        auto es = boost::edges(g);
+        auto e_counter = es.first;
+        auto e_end_of_graph = es.second;
+        while (e_counter != e_end_of_graph) { // initialization
+            edge_centrality_map.emplace(*e_counter, 0);
+            e_counter++;
+        }
+
         while (current_vertex != end_of_graph) {
-            if(*current_vertex == 1) {
-                std::cout << "current node: "<< *current_vertex << std:: endl;
-            }
             std::queue<v_iterator> v_queue;
             std::stack<v_iterator> v_stack;
 
@@ -82,7 +89,6 @@ namespace algos {
                 auto vertex2 = vs.first;
                 while (vertex2 != end_of_graph) {
                     if (boost::edge(*vertex1, *vertex2, g).second) {
-                        std::cout << *vertex1 << ", " << *vertex2 << std:: endl;
                         if (vertex_properties.at(vertex2).distance == -1) {
                             v_queue.push(vertex2);
                             vertex_properties.at(vertex2).distance = vertex_properties.at(vertex1).distance + 1;
@@ -108,45 +114,40 @@ namespace algos {
                 v_stack.pop();
                 auto vertex2_pred = vertex_properties.at(vertex2).pred;
                     for (auto &predecessor: vertex2_pred) {
-                        if(*predecessor == 0) {
-                            std::cout << "at 0" << std::endl;
-                        }
-                        vertex_properties.at(predecessor).dependency += ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
-                        if (vertex_properties.at(predecessor).dependency > 0) {
-                            std::cout << "not 0" << std::endl;
-                        }
+                        double c = ((double) vertex_properties.at(predecessor).num_shortest_paths / (double) vertex_properties.at(vertex2).num_shortest_paths) * (1 + vertex_properties.at(vertex2).dependency);
+                        e_descriptor t = boost::edge(*predecessor, *vertex2, g).first;
+                        edge_centrality_map.at(t) += c;
+                        vertex_properties.at(predecessor).dependency += c;
+
                     }
                     if (vertex2 != current_vertex) {
-                        if(*vertex2 == 0) {
-                            std::cout << "at 0" << std::endl;
-                        }
                         centrality_map.at(vertex2) += vertex_properties.at(vertex2).dependency/2;
                     }
             } // end of stack loop
 
             current_vertex++;
         } // end of outer loop
-//        for (auto it = centrality_map.begin(); it != centrality_map.end(); it++)
-//        {
-//            it->second = it->second/2;
-//        }
-        return centrality_map;
+        for (auto it = edge_centrality_map.begin(); it != edge_centrality_map.end(); it++)
+        {
+            it->second = it->second/2;
+        }
+        return edge_centrality_map;
     }
 
 
     void girvan_newman(graph &g) {
-        std::map<v_iterator, double> e_b_values1 = edge_betweenness(g);
+        std::map<e_descriptor, double> e_b_values1 = edge_betweenness(g);
 
-        boost::shared_array_property_map<double, boost::property_map<graph, boost::vertex_index_t>::const_type>
-                centrality_map(num_vertices(g), get(boost::vertex_index, g));
-        boost::brandes_betweenness_centrality(g, centrality_map);
-
-        std::cout << "Correct:" << std::endl;
-        std::cout << "0: " << centrality_map[0] << std::endl;
-        std::cout << "1: " << centrality_map[1] << std::endl;
-        std::cout << "2: " << centrality_map[2] << std::endl;
-        std::cout << "3: " << centrality_map[3] << std::endl;
-        std::cout << "4: " << centrality_map[4] << std::endl;
+//        boost::shared_array_property_map<double, boost::property_map<graph, boost::vertex_index_t>::const_type>
+//                centrality_map(num_vertices(g), get(boost::vertex_index, g));
+//        boost::brandes_betweenness_centrality(g, centrality_map);
+//
+//        std::cout << "Correct:" << std::endl;
+//        std::cout << "0: " << centrality_map[0] << std::endl;
+//        std::cout << "1: " << centrality_map[1] << std::endl;
+//        std::cout << "2: " << centrality_map[2] << std::endl;
+//        std::cout << "3: " << centrality_map[3] << std::endl;
+//        std::cout << "4: " << centrality_map[4] << std::endl;
 //        std::cout << "5: " << centrality_map[5] << std::endl;
 //        std::cout << "6: " << centrality_map[6] << std::endl;
 //        std::cout << "7: " << centrality_map[7] << std::endl;
@@ -159,7 +160,21 @@ namespace algos {
 
         std::cout << "Ours:" << std::endl;
         for (auto& pair : e_b_values1 ) {
-            std::cout << *pair.first << ": " << pair.second << std::endl;
+            std::cout << pair.first << ": " << pair.second << std::endl;
+        }
+
+        std::map<e_descriptor, double> edge_centralities;
+        auto ecm = boost::make_assoc_property_map(edge_centralities);
+        boost::brandes_betweenness_centrality(g, boost::edge_centrality_map(ecm));
+
+        std::cout << "Correct Edge Centralities" << std::endl;
+
+        for (auto it = edge_centralities.begin(); it != edge_centralities.end(); it++)
+        {
+            std::cout << it->first    // string (key)
+                      << ':'
+                      << it->second   // string's value
+                      << std::endl;
         }
     };
 
