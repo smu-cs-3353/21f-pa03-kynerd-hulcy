@@ -56,6 +56,9 @@ namespace algos {
     };
 
     bool shareNode(e_descriptor first, e_descriptor second) {
+        if(first == second) {
+            return false;
+        }
         if(first.m_source == second.m_source || first.m_source == second.m_target || first.m_target== second.m_source || first.m_target== second.m_target) {
             return true;
         }
@@ -66,8 +69,7 @@ namespace algos {
 
 
     std::map<e_descriptor, double> edge_betweenness(graph &g) {
-        std::map<v_iterator, vertex> vertex_properties;
-        std::map<e_iterator, vertex> edge_properties;
+        std::map<e_descriptor, edge> edge_properties;
         std::map<e_descriptor, double> centrality_map;
 
         auto es = boost::edges(g);
@@ -76,35 +78,26 @@ namespace algos {
         auto end_of_graph = es.second;
         while (edge_counter != end_of_graph) { // initialization
             centrality_map.emplace(*edge_counter, 0);
-            edge_properties.emplace(edge_counter, edge());
+            edge_properties.emplace(*edge_counter, edge());
             edge_counter++;
         }
 
-//        auto vs = boost::vertices(g);
-//        auto counter = vs.first;
-//        auto current_vertex = vs.first;
-//        auto end_of_graph = vs.second;
-//        while (counter != end_of_graph) { // initialization
-//            //centrality_map.emplace(counter, 0);
-//            vertex_properties.emplace(counter, vertex());
-//            counter++;
-//        }
 
         while (current_edge != end_of_graph) {
             std::queue<e_iterator> e_queue;
             std::stack<e_iterator> e_stack;
 
-            edge_counter = es.first;
-            while (edge_counter != end_of_graph) { // reinitialization for new vertex
-                edge_properties.at(edge_counter).pred.clear();
-                edge_properties.at(edge_counter).distance = -1;
-                edge_properties.at(edge_counter).num_shortest_paths = 0;
-                edge_counter++;
+            auto edge_counter2 = es.first;
+            while (edge_counter2 != end_of_graph) { // reinitialization for new edge
+                edge_properties.at(*edge_counter2).pred.clear();
+                edge_properties.at(*edge_counter2).distance = -1;
+                edge_properties.at(*edge_counter2).num_shortest_paths = 0;
+                edge_counter2++;
             }
 
-            edge_properties.at(edge_counter).distance = 0;
-            edge_properties.at(edge_counter).num_shortest_paths = 1;
-            e_queue.push(edge_counter);
+            edge_properties.at(*current_edge).distance = 0;
+            edge_properties.at(*current_edge).num_shortest_paths = 1;
+            e_queue.push(current_edge);
 
             while (!e_queue.empty()) {
                 auto edge1 = e_queue.front();
@@ -114,13 +107,13 @@ namespace algos {
                 auto edge2 = es.first;
                 while (edge2 != end_of_graph) {
                     if (shareNode(*edge1, *edge2)) {
-                        if (edge_properties.at(edge2).distance == -1) {
+                        if (edge_properties.at(*edge2).distance == -1) {
                             e_queue.push(edge2);
-                            edge_properties.at(edge2).distance = edge_properties.at(edge1).distance + 1;
+                            edge_properties.at(*edge2).distance = edge_properties.at(*edge1).distance + 1;
                         }
-                        if (edge_properties.at(edge2).distance == edge_properties.at(edge1).distance + 1) {
-                            edge_properties.at(edge2).num_shortest_paths += edge_properties.at(edge1).num_shortest_paths;
-                            edge_properties.at(edge2).pred.push_back(edge1);
+                        if (edge_properties.at(*edge2).distance == edge_properties.at(*edge1).distance + 1) {
+                            edge_properties.at(*edge2).num_shortest_paths += edge_properties.at(*edge1).num_shortest_paths;
+                            edge_properties.at(*edge2).pred.push_back(edge1);
                         }
                     }
                     edge2++;
@@ -130,19 +123,19 @@ namespace algos {
 
             edge_counter = es.first;
             while (edge_counter != end_of_graph) {
-                edge_properties.at(edge_counter).dependency = 0;
+                edge_properties.at(*edge_counter).dependency = 0;
                 edge_counter++;
             }
 
             while (!e_stack.empty()) {
                 auto edge2 = e_stack.top();
                 e_stack.pop();
-                auto edge2_pred = edge_properties.at(edge2).pred;
+                auto edge2_pred = edge_properties.at(*edge2).pred;
                     for (auto &predecessor: edge2_pred) {
-                        edge_properties.at(predecessor).dependency += ((double) edge_properties.at(predecessor).num_shortest_paths / (double) edge_properties.at(edge2).num_shortest_paths) * (1 + edge_properties.at(edge2).dependency);
+                        edge_properties.at(*predecessor).dependency += ((double) edge_properties.at(*predecessor).num_shortest_paths / (double) edge_properties.at(*edge2).num_shortest_paths) * (1 + edge_properties.at(*edge2).dependency);
                     }
                     if (edge2 != current_edge) {
-                        centrality_map.at(edge2) += edge_properties.at(edge2).dependency/2;
+                        centrality_map.at(*edge2) += edge_properties.at(*edge2).dependency;
                     }
             } // end of stack loop
 
