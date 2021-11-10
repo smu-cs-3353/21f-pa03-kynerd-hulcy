@@ -2,8 +2,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 
-p_in = .99
-p_out = .05
+p_in = .55
+p_out = .04
 
 
 def add(probability):
@@ -11,17 +11,16 @@ def add(probability):
 
 
 g = nx.Graph()
-# print(str(p_in * 16) + " " + str(p_out * 16))
 
-# community1 = list(range(1, 33))
-# community2 = list(range(33, 65))
-# community3 = list(range(65, 97))
-# community4 = list(range(97, 129))
+community1 = list(range(1, 33))
+community2 = list(range(33, 65))
+community3 = list(range(65, 97))
+community4 = list(range(97, 129))
 
-community1 = list(range(1, 4))
-community2 = list(range(4, 7))
-community3 = list(range(7, 10))
-community4 = list(range(10, 13))
+# community1 = list(range(1, 4))
+# community2 = list(range(4, 7))
+# community3 = list(range(7, 10))
+# community4 = list(range(10, 13))
 
 edges = {new_list: [] for new_list in range(1, 41)}  # change this
 #
@@ -140,7 +139,6 @@ nx.write_graphml(g, "input1.grapml")
 nx.draw(g)
 plt.savefig("testOutput.png")
 
-# print("p_in = " + str(p_in) + ", p_out = " + str(p_out))
-# print("num_edges = " + str(num_edges))
-# print("num_edges / num_vertices = " + str(num_edges / 128))
-# print(e_b_values)
+print("p_in = " + str(p_in) + ", p_out = " + str(p_out))
+print("num_edges = " + str(num_edges))
+print("num_edges / num_vertices = " + str(num_edges / 128))
