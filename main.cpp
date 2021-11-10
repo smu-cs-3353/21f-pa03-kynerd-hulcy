@@ -1,6 +1,8 @@
-#include <iostream>
+#include <fstream>
+#include "girvan_newman.h"
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
+    std::ifstream input("../input1.grapml");
+    algos::parse(input);
+    //algos::hi();
 }
