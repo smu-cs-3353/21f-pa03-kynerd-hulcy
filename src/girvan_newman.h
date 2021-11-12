@@ -20,10 +20,18 @@
 
 namespace Girvan_Newman {
 
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
+
+
+    struct VertexProperty {
+        std::string label;
+        long value;
+        long node_id;
+    };
+
+    //typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProperty> graph;
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
     typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;
-
 
     struct vertex {
         vertex() {
@@ -163,21 +171,11 @@ namespace Girvan_Newman {
     void run(std::ifstream &graphml_file) {
         graph g;
 
-        std::map<int, std::string> id2label;
-        std::map<int, std::string> id2value;
-        std::map<int, int> id2id;
-        boost::associative_property_map< std::map<int, std::string> >
-                label_map(id2label);
-        boost::associative_property_map< std::map<int, std::string> >
-                value_map(id2value);
-        boost::associative_property_map< std::map<int, int> >
-                id_map(id2id);
-
         boost::dynamic_properties dp;
 
-        dp.property("label", label_map);
-        dp.property("value", value_map);
-        dp.property("id", id_map);
+        dp.property("label", boost::get(&VertexProperty::label, g));
+        dp.property("value", boost::get(&VertexProperty::value, g));
+        dp.property("node_id", boost::get(&VertexProperty::node_id, g));
 
         boost::read_graphml(graphml_file, g, dp);
 

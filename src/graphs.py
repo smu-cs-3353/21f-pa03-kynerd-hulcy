@@ -1,5 +1,6 @@
 import networkx as nx
 import random
+import matplotlib.pyplot as plt
 
 p_in = .55
 p_out = .04
@@ -98,3 +99,6 @@ for vertex1 in community4:
 
 
 nx.write_graphml(g, "../input/random_graph.graphml")
+plt.figure(1,figsize=(9,9))
+nx.draw(g)
+plt.savefig("../input/before.png")
