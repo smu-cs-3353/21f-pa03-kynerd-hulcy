@@ -28,8 +28,8 @@ namespace Girvan_Newman {
         long node_id;
     };
 
-    //typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProperty> graph;
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> graph;
+    //typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS, VertexProperty> graph; // typedef for football.graphml
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>::vertex_iterator v_iterator;
     typedef boost::graph_traits<graph>::edge_descriptor e_descriptor;
 
@@ -145,10 +145,8 @@ namespace Girvan_Newman {
         std::vector<int> component (boost::num_vertices (g));
         size_t num_components = boost::connected_components (g, &component[0]);
         std::map<e_descriptor , double> betweenness_map = edge_betweenness(g);
-        //std::cout << num_components << std::endl;
 
         while (num_components < 4 && !betweenness_map.empty()) {
-            //betweenness_map = edge_betweenness(g);
             double highest_betweenness = 0;
             e_descriptor edge_to_remove;
             for (auto & pair : betweenness_map) {
@@ -157,14 +155,11 @@ namespace Girvan_Newman {
                     edge_to_remove = pair.first;
                 }
             }
-            //std::cout << "removing: " << edge_to_remove.m_source <<", "<< edge_to_remove.m_target << std::endl;
             g.remove_edge(edge_to_remove);
             betweenness_map.erase(edge_to_remove);
             num_components = boost::connected_components (g, &component[0]);
             betweenness_map = edge_betweenness(g);
         }
-        num_components = boost::connected_components (g, &component[0]);
-        //std::cout << num_components << std::endl;
     };
 
 
@@ -173,9 +168,10 @@ namespace Girvan_Newman {
 
         boost::dynamic_properties dp;
 
-        dp.property("label", boost::get(&VertexProperty::label, g));
-        dp.property("value", boost::get(&VertexProperty::value, g));
-        dp.property("node_id", boost::get(&VertexProperty::node_id, g));
+//        dynamic properties for football graphml
+//        dp.property("label", boost::get(&VertexProperty::label, g));
+//        dp.property("value", boost::get(&VertexProperty::value, g));
+//        dp.property("node_id", boost::get(&VertexProperty::node_id, g));
 
         boost::read_graphml(graphml_file, g, dp);
 
@@ -183,7 +179,6 @@ namespace Girvan_Newman {
 
         std::ofstream testOutput("../output/output.graphml");
         boost::write_graphml(testOutput, g, dp);
-
     };
 
 }

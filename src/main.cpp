@@ -31,5 +31,4 @@ int main(int argc, char** argv) {
 
     FILE* graph_printer = fopen("../src/printGraph.py", "r");
     if (graph_printer) PyRun_SimpleFile(graph_printer, "printGraph.py");
-    else cout << "Its fucked " <<endl;
 }
