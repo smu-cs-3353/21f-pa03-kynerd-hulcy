@@ -2,6 +2,7 @@ import json
 import networkx as nx
 import itertools
 import matplotlib.pyplot as plt
+from networkx.algorithms.community.centrality import girvan_newman
 
 g = nx.Graph()
 
@@ -25,15 +26,56 @@ for dictionary in newdata:
     artist_list = list(artists_in_playlist)
     playlists.append(artist_list)
 
-# print(playlists)
+playlists_alt = []
+for i in range(1000): # number of playlists to be checked
+    playlists_alt.append(playlists[i])
 
-for playlist in playlists:
+number_of_playlists = {}
+
+for playlist in playlists_alt:
     for i in range(len(playlist)):
         artist1 = playlist[i]
         for j in range(i, len(playlist)):
             artist2 = playlist[j]
-            g.add_edge(artist1, artist2)
+            if artist1 != artist2:
+                if artist1 > artist2:
+                    if (artist2, artist1) in number_of_playlists:
+                        if number_of_playlists[(artist2, artist1)] > 3 and not g.has_edge(artist2, artist1):
+                            g.add_edge(artist2, artist1, weight=3)
+                        else:
+                            number_of_playlists[(artist2, artist1)] += 1
+                    else:
+                        number_of_playlists[(artist2, artist1)] = 1
+                else:
+                    if (artist1, artist2) in number_of_playlists:
+                        if number_of_playlists[(artist1, artist2)] > 3 and not g.has_edge(artist1, artist2):
+                            g.add_edge(artist1, artist2, weight=3)
+                        else:
+                            number_of_playlists[(artist1, artist2)] += 1
+                    else:
+                        number_of_playlists[(artist1, artist2)] = 1
+            # if g.has_edge(artist1, artist2):
+            #     g[artist1][artist2]['weight'] += 1
+            # elif artist1 != artist2:
+            #     g.add_edge(artist1, artist2, weight=1)
 
 
-nx.draw(g)
-plt.show()
+# print(g.number_of_edges())
+# for edge in g.edges:
+#     if g.get_edge_data(*edge)["weight"] < 2:
+#         g.remove_edge(*edge)
+#
+# print(g.number_of_edges())
+
+print("nodes: " + str(g.number_of_nodes()) + ", " + "edges: " + str(g.number_of_edges()))
+# nx.draw(g, node_size=2)
+# plt.show()
+# nx.write_graphml(g, "../output/spotify_data.graphml")
+
+# communities = girvan_newman(g)
+#
+# node_groups = []
+# for com in next(communities):
+#     node_groups.append(list(com))
+#
+# print(node_groups)
