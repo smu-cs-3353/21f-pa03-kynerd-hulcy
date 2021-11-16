@@ -27,7 +27,7 @@ for dictionary in newdata:
     playlists.append(artist_list)
 
 playlists_alt = []
-for i in range(1000): # number of playlists to be checked
+for i in range(40): # number of playlists to be checked
     playlists_alt.append(playlists[i])
 
 number_of_playlists = {}
@@ -72,10 +72,14 @@ print("nodes: " + str(g.number_of_nodes()) + ", " + "edges: " + str(g.number_of_
 # plt.show()
 # nx.write_graphml(g, "../output/spotify_data.graphml")
 
-# communities = girvan_newman(g)
-#
-# node_groups = []
-# for com in next(communities):
-#     node_groups.append(list(com))
-#
-# print(node_groups)
+communities = girvan_newman(g)
+
+node_groups = []
+with open("communities_output.txt", 'w') as output_file:
+    for com in next(communities):
+        node_groups.append(list(com))
+        output_file.write(str(list(com)))
+        output_file.write("\n")
+    # output_file.write(str(node_groups))
+
+print(node_groups)
