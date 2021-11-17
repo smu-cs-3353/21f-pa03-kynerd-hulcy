@@ -1,7 +1,0 @@
-{
-  "name": "21f-pa03-kynerd-hulcy",
-  "version": "1.0.0",
-  "dependencies": {
-    "express": "^4.17.1"
-  }
-}
