@@ -99,6 +99,6 @@ for vertex1 in community4:
 
 
 nx.write_graphml(g, "../input/random_graph.graphml")
-plt.figure(1,figsize=(9,9))
+plt.figure(1, figsize=(9, 9))
 nx.draw(g)
 plt.savefig("../input/before.png")
